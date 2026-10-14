@@ -78,7 +78,7 @@ export function standings(world, group) {
   return buckets(rows.sort((a,b)=>b.points-a.points),r=>r.points).flatMap(resolve);
 }
 function scheduleTie(world,homeId,awayId,stage,round,index,oneLeg=false) {
-  const tieId=`${stage}-${index}`;
+  const tieId=`${world.competition?`s${world.competition.season}-`:''}${stage}-${index}`;
   world.fixtures.push({id:`${tieId}-1`,tieId,round,stage,leg:1,homeId,awayId,result:null,neutral:oneLeg});
   if(!oneLeg)world.fixtures.push({id:`${tieId}-2`,tieId,round:round+1,stage,leg:2,homeId:awayId,awayId:homeId,result:null});
 }
@@ -99,7 +99,7 @@ function advanceStage(world) {
   if(world.round===13)world.champion=world.fixtures.find(f=>f.stage==='Final').result.winner;
 }
 /** Mutates a server-owned world, returns full records to persist in same transaction. */
-export function advanceWorld(world) {
+export function advanceWorld(world, options={}) {
   if(world.champion)throw new Error('Musim telah selesai. Buat demo baru untuk musim berikutnya.');
   const pending=world.fixtures.filter(f=>f.round===world.round&&!f.result);
   if(!pending.length)throw new Error('Tidak ada pertandingan pada pekan ini.');
@@ -122,7 +122,7 @@ export function advanceWorld(world) {
   }
   // A matchday models several days: recovery occurs after all fixtures together.
   for(const c of world.clubs)for(const p of c.players)p.condition=clamp(p.condition+18,30,100);
-  world.round++;world.version++;advanceStage(world);
+  world.round++;world.version++;if(!options.skipStages)advanceStage(world);
   if(world.nextKickoff)world.nextKickoff+=world.interval;
   return records;
 }
@@ -135,7 +135,7 @@ export function train(world, playerId, focus) {
   if(focus!=='recovery'&&p.condition<45)throw new Error('Kondisi terlalu rendah. Pilih pemulihan.');
   if(focus==='recovery')p.condition=clamp(p.condition+25,0,100);
   else {p.attributes[focus]=round(Math.min(99,p.attributes[focus]+.35+(100-p.attributes[focus])*.009));p.condition-=14;}
-  p.trainingRound=world.round;p.trainingLog.push({round:world.round,focus,value:focus==='recovery'?p.condition:p.attributes[focus]});
+  p.trainingRound=world.round;p.trainingLog.push({round:world.round,season:world.competition?.season||0,focus,value:focus==='recovery'?p.condition:p.attributes[focus]});
   world.version++;return p;
 }
 export function setTactics(world, clubId, input) {

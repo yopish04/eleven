@@ -1,5 +1,6 @@
 import { selectLineup } from './engine.js';
-import { createWorld, advanceWorld, train, setTactics } from './world.js';
+import { createWorld, train, setTactics } from './world.js';
+import { initializeCareer, advanceCareer, nextSeason, migrateLegacyJourney } from './career.js';
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
 const error=(message,status)=>json({error:message},status);
 export async function gameApi(request, db, owner) {
@@ -39,6 +40,7 @@ export async function gameApi(request, db, owner) {
       if(!xi.some(p=>p.id===player.id))xi[xi.findIndex(p=>p.role===player.position)]=player;
       club.lineup=xi.map(p=>p.id);
       world.profile={clubId:club.id,playerId:player.id,name:player.name};
+      initializeCareer(world);
       const runId=crypto.randomUUID(), mutation=crypto.randomUUID();
       world.version=row?row.version+1:0;
       if(row) {
@@ -59,7 +61,9 @@ export async function gameApi(request, db, owner) {
     let records=[];
     if(body.action==='train')train(world,world.profile.playerId,body.focus);
     else if(body.action==='tactics')setTactics(world,world.profile.clubId,body);
-    else if(body.action==='advance')records=advanceWorld(world);
+    else if(body.action==='advance')records=advanceCareer(world);
+    else if(body.action==='nextSeason')nextSeason(world);
+    else if(body.action==='startJourney')migrateLegacyJourney(world);
     else return error('Aksi tidak dikenal.',400);
     const mutation=crypto.randomUUID();
     const statements=[db.prepare('UPDATE worlds SET payload=?,version=?,mutation=?,updated_at=? WHERE owner=? AND version=?').bind(JSON.stringify(world),world.version,mutation,Date.now(),owner,row.version)];

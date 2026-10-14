@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./mobile.css";
 
 export const metadata: Metadata = {
-  title: "ELEVEN — Your career. Your Asia.",
-  description: "Bangun karier, pimpin sebelas pemain, dan taklukkan Asia. Prototipe simulasi sepak bola berbasis statistik.",
+  title: "ELEVEN — Dari Lokal Jadi Legenda",
+  description: "Mulai dari Pra-Regional, bangun pemainmu, dan bawa klub menuju panggung Asia. Simulasi karier sepak bola.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

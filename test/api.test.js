@@ -26,7 +26,7 @@ test('client cannot train another player, set scores, double train or replay a s
   assert.equal((await request({action:'train',version:w.version,focus:'pace'},'a',db)).status,400);
   const old=w.version;r=await request({action:'advance',version:old,score:[999,0]},'a',db);const data=await r.json();w=data.world;
   assert.equal(r.status,200);assert.equal(w.round,1);assert.ok(data.match);assert.notEqual(data.match.match.score[0],999);
-  assert.equal(db.sql.prepare('SELECT COUNT(*) n FROM matches').get().n,16);
+  assert.equal(db.sql.prepare('SELECT COUNT(*) n FROM matches').get().n,4);
   assert.equal((await request({action:'advance',version:old},'a',db)).status,409);
   const replay=await gameApi(new Request(`https://eleven.example/api/game?match=${data.match.id}`),db,'a');assert.deepEqual(await replay.json(),data.match);
   await request(begin,'b',db);
@@ -52,4 +52,18 @@ test('reset requires current version and replaces only own career and replays',a
   const res=await request({...begin,action:'reset',version:w.version,name:'New Career'},'a',db);assert.equal(res.status,200);
   const next=(await res.json()).world;assert.equal(next.round,0);assert.notEqual(next.seed,w.seed);assert.equal(next.version,w.version+1);
   assert.equal(db.sql.prepare('SELECT COUNT(*) n FROM matches').get().n,0);
+});
+test('season transition is server-controlled, versioned, and keeps historical replays accessible',async()=>{
+  const db=database();let {world:w}=await (await request(begin,'season-owner',db)).json();
+  assert.equal(w.competition.tier,'pre');
+  assert.equal((await request({action:'nextSeason',version:w.version,tier:'asia'},'season-owner',db)).status,400);
+  let first;
+  for(let i=0;i<14;i++){const r=await request({action:'advance',version:w.version},'season-owner',db);assert.equal(r.status,200);const d=await r.json();w=d.world;if(i===0)first=d.match;}
+  const expected=w.competition.outcome.nextTier,oldVersion=w.version,oldProfile=w.profile;
+  const res=await request({action:'nextSeason',version:oldVersion,tier:'asia'},'season-owner',db);assert.equal(res.status,200);w=(await res.json()).world;
+  assert.equal(w.competition.tier,expected);assert.deepEqual(w.profile,oldProfile);assert.equal(w.competition.season,2);assert.equal(w.history.length,1);
+  assert.equal((await request({action:'nextSeason',version:oldVersion},'season-owner',db)).status,409);
+  const replay=await gameApi(new Request(`https://eleven.example/api/game?match=${first.id}`),db,'season-owner');assert.equal(replay.status,200);assert.deepEqual(await replay.json(),first);
+  assert.equal((await request({action:'advance',version:w.version},'season-owner',db)).status,200);
+  assert.equal(db.sql.prepare('SELECT COUNT(*) n FROM matches').get().n,60);
 });

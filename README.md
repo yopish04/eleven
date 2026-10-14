@@ -6,22 +6,22 @@ Prototipe simulasi karier pemain dan pelatih untuk arah aplikasi Android. UI web
 
 Masuk menggunakan akun ChatGPT pemilik Site. Buat nama, klub, dan posisi, lalu pilih latihan dan mainkan pekan. Ganti peran ke **Pelatih** untuk menyimpan formasi dan starting XI.
 
-## Sudah dapat dimainkan
+## Prototipe 0.2 — liga berjenjang dan antarmuka ponsel
 
-- Karakter pemain di satu dari 32 klub fiksi Asia, 16 pemain per klub.
-- Latihan sekali setiap pekan, perkembangan atribut, kondisi dan pemulihan.
-- Peran pemain/pelatih dapat ditukar di demo; susunan 11 pemain dan tiga formasi.
-- Mentalitas, gaya umpan, pressing, kondisi, stamina dan kecocokan posisi memengaruhi aksi.
-- 8 grup, kandang–tandang, dua klub lolos per grup, knockout dua leg, final satu laga. Satu musim selesai dalam 13 pekan / 125 pertandingan.
-- Perpanjangan waktu dan penalti pada agregat imbang; gol penalti tidak mencemari statistik laga.
-- Replay 2D dengan kontrol waktu, statistik tim/pemain, dan unduhan catatan pertandingan JSON.
-- Progres server per pengguna, penyimpanan atomik hasil + statistik, pemeriksaan versi untuk mencegah pembaruan ganda.
+- Karier baru dimulai di **Liga Pra-Regional**, kemudian Regional, Nasional, dan Asia Cup.
+- Tiap liga domestik berisi 8 klub, 14 pekan kandang–tandang, 56 pertandingan. Dua teratas promosi/tiket Asia; dua terbawah Regional/Nasional terdegradasi. Pra-Regional adalah level terbawah.
+- Asia Cup tetap memiliki 32 klub, fase grup, knockout dua leg, final satu laga. Setelah turnamen, kembali ke Nasional untuk kualifikasi berikutnya. Ini siklus karier sederhana, bukan jadwal domestik dan kontinental serentak.
+- Pergantian musim ditentukan server. Atribut, statistik karier dan replay tetap tersimpan. Riwayat menyimpan 20 musim terakhir. Lawan baru dibuat per musim; belum ada simulasi persistensi semua klub dunia.
+- Karier versi lama tetap dapat dimainkan. Tombol **Mulai Pra-Regional** mengarsipkan musim Asia lama setelah konfirmasi pengguna; tidak menghapus pemain, atribut, statistik atau replay. Reset karier adalah aksi terpisah yang menghapus progres lama.
+- Lobi dengan artwork stadion, tombol main utama, navigasi bawah, kartu pemain, ringkasan kondisi dan peta empat jenjang liga. Area terpisah untuk klasemen, jadwal/hasil, riwayat, taktik dan latihan.
+- Mesin berbasis peristiwa yang sama, latihan tiap pekan, starting XI, tiga formasi, pressing, kondisi dan kecocokan posisi. Replay 2D dan statistik dapat ditelusuri ke peristiwa laga.
+- Penyimpanan server privat per pengguna, transaksi atomik dan pemeriksaan versi agar aksi ganda tidak menggandakan progres.
 
 ## Batas prototipe
 
-Ini **belum APK**, belum multiplayer, dan belum berisi pemain profesional berlisensi. Lawan otomatis dan identitas klub/pemain adalah data contoh. Setiap akun menjalankan dunia demo sendiri. Pergantian peran hanya untuk mencoba dua pengalaman, bukan otorisasi multi-pengguna produksi.
+Belum APK, multiplayer, atau liga/data pemain profesional resmi. Nama klub, nilai atribut, dan aturan piramida adalah skenario fiksi ELEVEN. Artwork beranda tidak menggambarkan gameplay 3D; replay masih berupa ilustrasi 2D posisi formasi/peristiwa.
 
-Mesin memodelkan peristiwa abstrak, bukan fisika bola dan tracking pemain. xG dan rating adalah model awal ELEVEN, belum dikalibrasi terhadap data profesional. Animasi lapangan menunjukkan ilustrasi formasi/peristiwa. Belum ada cedera, kartu, offside, bola mati khusus, pergantian pemain, transfer, liga domestik, atau musim lanjutan otomatis. Aturan penentu grup menyederhanakan fair play/penalti khusus menjadi undian deterministik setelah kriteria olahraga; bracket sudah ditetapkan, bukan undian resmi AFC.
+Belum ada transfer, cedera, kartu, offside, pergantian pemain atau simulasi liga domestik/kontinental paralel. xG dan rating adalah model awal yang belum dikalibrasi terhadap data profesional. Format Asia menyederhanakan fair play dan undian.
 
 ## Menjalankan dan menguji
 
@@ -44,15 +44,17 @@ Tidak ada akun/password demo bersama, kunci API, atau kredensial dalam repositor
 | Lokasi | Tanggung jawab |
 | --- | --- |
 | `src/engine.js` | PRNG, pemilihan XI, aksi umpan/duel/tembakan, fatigue, xG, extra time, shootout, reducer statistik |
-| `src/world.js` | Klub dan pemain contoh, jadwal, klasemen head-to-head, knockout, latihan dan taktik |
+| `src/world.js` | Klub dan pemain contoh, klasemen head-to-head, knockout, latihan dan taktik |
+| `src/career.js` | Piramida liga, jadwal domestik, promosi/degradasi, transisi musim dan arsip karier lama |
 | `src/api.js` | Aksi server, isolasi akun, validasi, penyimpanan transaksional dan kontrol versi |
 | `app/api/game/route.ts` | Identitas hosted + binding database ke API |
-| `app/game.tsx` | UI ponsel/desktop, dua peran, replay dan form |
+| `app/game.tsx`, `app/mobile.css` | Lobi game mobile, perjalanan liga, latihan dan profil |
+| `app/game-components.tsx` | Formasi, taktik, dialog dan replay |
 | `db/schema.ts`, `drizzle/` | Skema dan migrasi database |
 | `test/` | Pengujian mesin, kompetisi, API, persistensi dan rollback |
 | `docs/` | Rancangan statistik, Android/multiplayer dan hasil benchmark |
 
-14 pengujian otomatis memeriksa determinisme, sensitivitas atribut, statistik dari kejadian, susunan tim, latihan, format kompetisi, satu musim penuh, agregat/penalti, isolasi pengguna, versi, dan rollback. Pemeriksaan TypeScript dan build dijalankan. Verifikasi visual melalui browser tidak tersedia pada lingkungan pembuatan ini.
+20 pengujian otomatis memeriksa determinisme, sensitivitas atribut, statistik dari kejadian, susunan tim, latihan, format kompetisi, satu musim penuh, agregat/penalti, isolasi pengguna, versi, dan rollback. Pemeriksaan TypeScript dan build dijalankan. Pengujian juga mencakup liga domestik lengkap, promosi hingga Asia, degradasi, migrasi lama, pergantian musim atomik dan replay historis. Browser QA tidak tersedia di lingkungan ini; belum diuji pada perangkat Android.
 
 ## Referensi perilaku
 
