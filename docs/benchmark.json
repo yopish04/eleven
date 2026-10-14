@@ -1,0 +1,30 @@
+{
+  "engine": "0.1.0",
+  "purpose": "Sensitivity check, not professional-data calibration",
+  "results": [
+    {
+      "finishing": 35,
+      "matches": 500,
+      "goalsPerMatch": 1.598,
+      "concededPerMatch": 1.704,
+      "shotsPerMatch": 14.352,
+      "winRate": 0.358
+    },
+    {
+      "finishing": 65,
+      "matches": 500,
+      "goalsPerMatch": 2.138,
+      "concededPerMatch": 1.704,
+      "shotsPerMatch": 14.352,
+      "winRate": 0.48
+    },
+    {
+      "finishing": 95,
+      "matches": 500,
+      "goalsPerMatch": 2.832,
+      "concededPerMatch": 1.704,
+      "shotsPerMatch": 14.352,
+      "winRate": 0.606
+    }
+  ]
+}
